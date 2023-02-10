@@ -1,12 +1,13 @@
 import torch
 from torch import Tensor, nn
+import numpy as np
 
 class FontClassifierModel(nn.Module):
     """
     A model to classify fonts from an image of characters.
     """
     
-    def __init__(self, init_shape: tuple[int]) -> None:
+    def __init__(self, init_shape: tuple[int], in_channels) -> None:
         """Initiazlize the model.
 
         Args:
@@ -15,17 +16,17 @@ class FontClassifierModel(nn.Module):
         super().__init__()
         
         self.conv_layers = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(5, 5), stride=3, padding=2),
+            nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=(5, 5), stride=3, padding=2),
             nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(3, 3), stride=3, padding=2),
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=1, kernel_size=(7, 7), stride=3, padding=2),
         )
         
-        demo_vec = torch.zeros((1, 3, *init_shape))
+        demo_vec = torch.zeros((1, *init_shape))
         demo_vec = self.conv_layers(demo_vec)
         
-        num_features = Tensor(demo_vec).shape[2] * Tensor(demo_vec).shape[3]
+        num_features = np.prod(demo_vec.shape)
 
         self.linear_layers = nn.Sequential(
             nn.Flatten(),
