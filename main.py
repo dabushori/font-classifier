@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 
 from synth_text_dataset import SynthTextCharactersDatasetRAM
 from transforms import img_transform, labels_transform, char_transform
-from model import FontClassifierModel
+from model import FontClassifierModel, Resnet32
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device):
@@ -47,7 +47,9 @@ def main():
     device = (
         torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     )
-
+    
+    print('Loading data...')
+    
     filename = "Project/SynthText_train.h5"
     num_of_images = 998
     train_dataset = SynthTextCharactersDatasetRAM(
@@ -68,10 +70,13 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, shuffle=True)
 
+    print('Data Loaded successfully!')
+    
     init_shape = (200, 100)
-    classifier = FontClassifierModel(init_shape, 1).to(device)
+    # classifier = FontClassifierModel(init_shape, 1).to(device)
+    classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
     lr = 1e-1
-    epochs = 50
+    epochs = 3
 
     loss_fn = nn.CrossEntropyLoss()
     # optimizer = torch.optim.SGD(classifier.parameters(), lr=lr)
