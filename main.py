@@ -12,6 +12,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device):
     for batch, (X, y) in enumerate(dataloader):
         # Compute prediction and loss
         X = X.to(device)
+        y = y.to(device)
         pred = model(X)
         loss = loss_fn(pred, y.long())
 
@@ -33,6 +34,7 @@ def test_loop(dataloader, model, loss_fn, device):
     with torch.no_grad():
         for X, y in dataloader:
             X = X.to(device)
+            y = y.to(device)
             pred = model(X)
             test_loss += loss_fn(pred, y.long()).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
@@ -47,6 +49,7 @@ def main():
     device = (
         torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     )
+    # device = torch.device("cpu")
     
     print('Loading data...')
     
@@ -67,7 +70,7 @@ def main():
         start_idx=int(0.8 * num_of_images),
     )
 
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
     test_dataloader = DataLoader(test_dataset, shuffle=True)
 
     print('Data Loaded successfully!')
