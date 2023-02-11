@@ -19,7 +19,4 @@ def char_transform(x):
     return np.array([x])
 
 def labels_transform(font):
-    label_idx = {b'Titillium Web': 0, b'Alex Brush': 1, b'Ubuntu Mono': 2, b'Open Sans': 3, b'Sansation': 4}[font]
-    one_hot_encoded = np.zeros(5, dtype=np.float32)
-    one_hot_encoded[label_idx] = 1
-    return one_hot_encoded
+    return {b'Titillium Web': 0, b'Alex Brush': 1, b'Ubuntu Mono': 2, b'Open Sans': 3, b'Sansation': 4}[font]
