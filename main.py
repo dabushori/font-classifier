@@ -1,10 +1,12 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from synth_text_dataset import SynthTextCharactersDatasetRAM
-from transforms import img_transform, labels_transform, char_transform
 from model import FontClassifierModel, Resnet32
+from synth_text_dataset import SynthTextCharactersDatasetRAM
+from transforms import char_transform, img_transform, labels_transform
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device):
@@ -35,14 +37,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, device):
             train_loss += loss_fn(pred, y.long()).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     train_loss /= num_batches
-    print(f"{correct = }")
     correct /= size
     print(
         f"Train Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {train_loss:>8f}"
     )
 
 
-def test_loop(dataloader, model, loss_fn, device):
+def test_loop(dataloader, model, loss_fn, device) -> tuple[int]:
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
@@ -56,11 +57,16 @@ def test_loop(dataloader, model, loss_fn, device):
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
     test_loss /= num_batches
-    print(f"{correct = }")
     correct /= size
     print(
         f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n"
     )
+
+    return test_loss, correct
+
+
+def get_name():
+    return "current_model_bz=32_adam"
 
 
 def main():
@@ -72,13 +78,14 @@ def main():
 
     filename = "Project/SynthText_train.h5"
     num_of_images = 998
+    train_percentage = 0.8
     init_shape = (100, 100)
     train_dataset = SynthTextCharactersDatasetRAM(
         filename,
         full_image_transform=img_transform,
         on_get_item_transform=char_transform,
         target_transform=labels_transform,
-        end_idx=int(0.8 * num_of_images),
+        end_idx=int(train_percentage * num_of_images),
         shape=init_shape,
     )
     test_dataset = SynthTextCharactersDatasetRAM(
@@ -86,7 +93,7 @@ def main():
         full_image_transform=img_transform,
         on_get_item_transform=char_transform,
         target_transform=labels_transform,
-        start_idx=int(0.8 * num_of_images),
+        start_idx=int(train_percentage * num_of_images),
         shape=init_shape,
     )
 
@@ -98,19 +105,41 @@ def main():
     classifier = FontClassifierModel(init_shape, 1).to(device)
     # classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
     lr = 1e-2
-    epochs = 100
+    epochs = 25
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(classifier.parameters(), lr=lr)
-    # optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
+    # optimizer = torch.optim.SGD(classifier.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
 
+    min_avg_loss = np.inf
+    max_acc = -np.inf
+    accuracies = np.zeros(epochs)
+    avg_losses = np.zeros(epochs)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         train_loop(train_dataloader, classifier, loss_fn, optimizer, device)
-        test_loop(test_dataloader, classifier, loss_fn, device)
+        avg_losses[t], accuracies[t] = test_loop(
+            test_dataloader, classifier, loss_fn, device
+        )
+
+        # if avg_losses[t] < min_avg_loss:
+        #     torch.save(classifier.state_dict(), f"models/{get_name()}.pth")
+        if accuracies[t] > max_acc:
+            torch.save(classifier.state_dict(), "models/model_weights.pth")
+
     print("Done!")
 
-    torch.save(classifier.state_dict(), "models/model_weights.pth")
+    plt.subplot(121)
+    plt.title("Accuracy over time")
+    plt.plot(range(epochs), accuracies)
+
+    plt.subplot(122)
+    plt.title("Average loss over time")
+    plt.plot(range(epochs), avg_losses)
+
+    plt.savefig(f"outputs/{get_name()}.png")
+
+    # torch.save(classifier.state_dict(), "models/model_weights.pth")
 
 
 if __name__ == "__main__":
