@@ -36,6 +36,7 @@ class FontClassifierModel(Module):
                 kernel_size=(3, 3),
                 stride=1,
             ),
+            ReLU(),
             MaxPool2d(kernel_size=(2,2)),
             Conv2d(
                 in_channels=64,
@@ -43,6 +44,7 @@ class FontClassifierModel(Module):
                 kernel_size=(3, 3),
                 stride=1,
             ),
+            ReLU(),
             MaxPool2d(kernel_size=(2,2)),
             Conv2d(
                 in_channels=128,
@@ -50,8 +52,9 @@ class FontClassifierModel(Module):
                 kernel_size=(3, 3),
                 stride=1,
             ),
+            ReLU(),
             MaxPool2d(kernel_size=(2,2)),
-            Dropout(0.1),
+            Dropout(0.25),
         )
 
         demo_vec = torch.zeros((1, 1, *init_shape))
@@ -62,7 +65,7 @@ class FontClassifierModel(Module):
         self.linear_layers = Sequential(
             Flatten(),
             Linear(num_features, 512),
-            Sigmoid(),
+            ReLU(),
             Linear(512, 5),
         )
 

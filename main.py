@@ -9,6 +9,8 @@ from model import FontClassifierModel, Resnet32
 
 def train_loop(dataloader, model, loss_fn, optimizer, device):
     size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    train_loss, correct = 0, 0
     for batch, (X, y) in enumerate(dataloader):
         # Compute prediction and loss
         X = X.to(device)
@@ -24,7 +26,18 @@ def train_loop(dataloader, model, loss_fn, optimizer, device):
         if batch % 100 == 0:
             loss, current = loss.item(), batch * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-
+    
+    with torch.no_grad():
+        for X, y in dataloader:
+            X = X.to(device)
+            y = y.to(device)
+            pred = model(X)
+            train_loss += loss_fn(pred, y.long()).item()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+    train_loss /= num_batches
+    print(f'{correct = }')
+    correct /= size
+    print(f"Train Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {train_loss:>8f}")
 
 def test_loop(dataloader, model, loss_fn, device):
     size = len(dataloader.dataset)
@@ -79,12 +92,12 @@ def main():
     
     classifier = FontClassifierModel(init_shape, 1).to(device)
     # classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
-    lr = 1e-1
-    epochs = 3
+    lr = 1e-2
+    epochs = 10
 
     loss_fn = nn.CrossEntropyLoss()
-    # optimizer = torch.optim.SGD(classifier.parameters(), lr=lr)
-    optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
+    optimizer = torch.optim.SGD(classifier.parameters(), lr=lr)
+    # optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
 
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
