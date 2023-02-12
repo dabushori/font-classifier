@@ -52,12 +52,14 @@ def main():
     
     filename = "Project/SynthText_train.h5"
     num_of_images = 998
+    init_shape = (100, 100)
     train_dataset = SynthTextCharactersDatasetRAM(
         filename,
         full_image_transform=img_transform,
         on_get_item_transform=char_transform,
         target_transform=labels_transform,
         end_idx=int(0.8 * num_of_images),
+        shape=init_shape
     )
     test_dataset = SynthTextCharactersDatasetRAM(
         filename,
@@ -65,16 +67,16 @@ def main():
         on_get_item_transform=char_transform,
         target_transform=labels_transform,
         start_idx=int(0.8 * num_of_images),
+        shape=init_shape
     )
-
+    
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, shuffle=True)
 
     print('Data Loaded successfully!')
     
-    init_shape = (200, 100)
-    # classifier = FontClassifierModel(init_shape, 1).to(device)
-    classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
+    classifier = FontClassifierModel(init_shape, 1).to(device)
+    # classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
     lr = 1e-1
     epochs = 3
 

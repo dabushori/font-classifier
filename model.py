@@ -5,12 +5,13 @@ from torch.nn import (
     Conv2d,
     BatchNorm2d,
     ReLU,
+    Dropout,
     AvgPool2d,
+    MaxPool2d,
     Linear,
     Flatten,
     Sigmoid,
     Module,
-    Softmax,
 )
 import numpy as np
 
@@ -31,19 +32,26 @@ class FontClassifierModel(Module):
         self.conv_layers = Sequential(
             Conv2d(
                 in_channels=in_channels,
-                out_channels=16,
-                kernel_size=(5, 5),
-                stride=3,
-                padding=2,
+                out_channels=64,
+                kernel_size=(3, 3),
+                stride=1,
             ),
-            ReLU(),
+            MaxPool2d(kernel_size=(2,2)),
             Conv2d(
-                in_channels=16, out_channels=32, kernel_size=(3, 3), stride=3, padding=2
+                in_channels=64,
+                out_channels=128,
+                kernel_size=(3, 3),
+                stride=1,
             ),
-            ReLU(),
+            MaxPool2d(kernel_size=(2,2)),
             Conv2d(
-                in_channels=32, out_channels=1, kernel_size=(7, 7), stride=3, padding=2
+                in_channels=128,
+                out_channels=256,
+                kernel_size=(3, 3),
+                stride=1,
             ),
+            MaxPool2d(kernel_size=(2,2)),
+            Dropout(0.1),
         )
 
         demo_vec = torch.zeros((1, *init_shape))
@@ -53,11 +61,9 @@ class FontClassifierModel(Module):
 
         self.linear_layers = Sequential(
             Flatten(),
-            Linear(num_features, 64),
+            Linear(num_features, 512),
             Sigmoid(),
-            Linear(64, 32),
-            Sigmoid(),
-            Linear(32, 5),
+            Linear(512, 5),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -1,8 +1,8 @@
 import numpy as np
 import cv2 as cv
 
-mean = np.loadtxt('data/char_mean.txt')
-std = np.loadtxt('data/char_std.txt')
+mean = np.loadtxt('data/char_mean_100x100.txt')
+std = np.loadtxt('data/char_std_100x100.txt')
 
 def img_transform(x):
     x = x.astype(np.float32).mean(axis=2) / 255
