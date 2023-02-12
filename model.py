@@ -54,7 +54,7 @@ class FontClassifierModel(Module):
             Dropout(0.1),
         )
 
-        demo_vec = torch.zeros((1, *init_shape))
+        demo_vec = torch.zeros((1, 1, *init_shape))
         demo_vec = self.conv_layers(demo_vec)
 
         num_features = np.prod(demo_vec.shape)
