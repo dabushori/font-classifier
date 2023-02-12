@@ -22,11 +22,13 @@ class FontClassifierModel(Module):
     """
 
     def __init__(self, init_shape: tuple[int], in_channels) -> None:
-        """Initiazlize the model.
+        """
+        Initiazlize the model.
 
         Args:
             init_shape (tuple[int]): The initial shape of the images.
         """
+
         super().__init__()
 
         self.conv_layers = Sequential(
@@ -37,7 +39,7 @@ class FontClassifierModel(Module):
                 stride=1,
             ),
             ReLU(),
-            MaxPool2d(kernel_size=(2,2)),
+            MaxPool2d(kernel_size=(2, 2)),
             Conv2d(
                 in_channels=64,
                 out_channels=128,
@@ -45,7 +47,7 @@ class FontClassifierModel(Module):
                 stride=1,
             ),
             ReLU(),
-            MaxPool2d(kernel_size=(2,2)),
+            MaxPool2d(kernel_size=(2, 2)),
             Conv2d(
                 in_channels=128,
                 out_channels=256,
@@ -53,7 +55,15 @@ class FontClassifierModel(Module):
                 stride=1,
             ),
             ReLU(),
-            MaxPool2d(kernel_size=(2,2)),
+            MaxPool2d(kernel_size=(2, 2)),
+            Conv2d(
+                in_channels=256,
+                out_channels=512,
+                kernel_size=(3, 3),
+                stride=1,
+            ),
+            ReLU(),
+            MaxPool2d(kernel_size=(2, 2)),
             Dropout(0.25),
         )
 
@@ -70,7 +80,8 @@ class FontClassifierModel(Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Calculate the output of the model on a given input.
+        """
+        Calculate the output of the model on a given input.
 
         Args:
             x (torch.Tensor): The input vector.
@@ -87,7 +98,11 @@ class Resnet32Block(Module):
     @staticmethod
     def calc_padding(shape, kernel_size, stride):
         shape = np.array(shape)
-        return tuple(np.ceil(0.5 * (shape * stride - shape - stride + kernel_size - 1)).astype(int))
+        return tuple(
+            np.ceil(0.5 * (shape * stride - shape - stride + kernel_size - 1)).astype(
+                int
+            )
+        )
 
     def __init__(
         self,
@@ -99,7 +114,6 @@ class Resnet32Block(Module):
     ):
         super().__init__()
 
-        
         self.stride_layers = None
         if stride > 1:
             self.stride_layers = Sequential(

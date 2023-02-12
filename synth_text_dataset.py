@@ -4,6 +4,7 @@ import numpy as np
 import cv2 as cv
 import typing
 
+
 class SynthTextCharactersDataset(Dataset):
     """
     How does it gonna work?
@@ -21,10 +22,18 @@ class SynthTextCharactersDataset(Dataset):
         shape: tuple[int] = (100, 200),
         train: bool = True,
         transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        target_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        on_get_item_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        on_get_item_target_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        full_image_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
+        target_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        on_get_item_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        on_get_item_target_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        full_image_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
     ) -> None:
         """
         Create the dataset. The items that will be saved are the characters, each item is a character from an image.
@@ -98,7 +107,9 @@ class SynthTextCharactersDataset(Dataset):
 
         return len(self.x_items)
 
-    def __getitem__(self, idx) -> typing.Union[tuple[np.array, typing.Any], tuple[np.array]]:
+    def __getitem__(
+        self, idx
+    ) -> typing.Union[tuple[np.array, typing.Any], tuple[np.array]]:
         """
         Get an item from the dataset
         """
@@ -146,7 +157,9 @@ class SynthTextCharactersDataset(Dataset):
             return self.full_image_transform(img)
         return img
 
-    def get_char_data(self, img: typing.Union[str, np.array], charBB, shape: tuple[int]) -> np.array:
+    def get_char_data(
+        self, img: typing.Union[str, np.array], charBB, shape: tuple[int]
+    ) -> np.array:
         """
         Get an image of a character given the full image's name and it's bounding box using a prjective transform
         """
@@ -184,10 +197,18 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
         shape: tuple[int] = (100, 200),
         train: bool = True,
         transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        target_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        on_get_item_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        on_get_item_target_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
-        full_image_transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
+        target_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        on_get_item_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        on_get_item_target_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        full_image_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
     ) -> None:
         """
         Create the dataset. The items that will be saved are the characters, each item is a character from an image.
@@ -220,9 +241,9 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
             for im in im_names:
                 curr_img_data = self.db_data[im]
                 num_chars = curr_img_data.attrs["charBB"].shape[2]
-                
+
                 img_data = self.get_image_data(im)
-                
+
                 for idx in range(num_chars):
                     # The charBB shape is (2, 4, num_chars). The first axis is the x,y coordinates, the second axis is the index of the corner of the rectangle,
                     # and the third axis is the index of the character.
@@ -235,7 +256,7 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
                     # Get the input vector and apply the `transform` on it (if available)
                     x = (im, charBB)
                     x = transform(x) if transform else x
-                    
+
                     # Get the chatacter out of the image (using a projective transform)
                     x = self.get_char_data(img_data, x[1], self.shape)
 
@@ -244,15 +265,19 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
                         x = x.swapaxes(1, 2).swapaxes(0, 1)
 
                     # Apply the specified `on_get_item_transform` (if available)
-                    x = self.on_get_item_transform(x) if self.on_get_item_transform else x
+                    x = (
+                        self.on_get_item_transform(x)
+                        if self.on_get_item_transform
+                        else x
+                    )
 
                     # Apply the specified `on_get_item_target_transform` (if available)
                     y = (
                         self.train and self.on_get_item_target_transform(y)
                         if self.on_get_item_target_transform
                         else y
-                    )                    
-                    
+                    )
+
                     self.x_items.append(x)
                     self.y_items.append(y)
             self.x_items = np.array(self.x_items, np.float32)
@@ -263,7 +288,7 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
                 num_chars = curr_img_data.attrs["charBB"].shape[2]
 
                 img_data = self.get_image_data(im)
-                
+
                 for idx in range(num_chars):
                     # The charBB shape is (2, 4, num_chars). The first axis is the x,y coordinates, the second axis is the index of the corner of the rectangle,
                     # and the third axis is the index of the character.
@@ -281,12 +306,18 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
                         x = x.swapaxes(1, 2).swapaxes(0, 1)
 
                     # Apply the specified `on_get_item_transform` (if available)
-                    x = self.on_get_item_transform(x) if self.on_get_item_transform else x
+                    x = (
+                        self.on_get_item_transform(x)
+                        if self.on_get_item_transform
+                        else x
+                    )
 
                     self.x_items.append(x)
             self.x_items = np.array(self.x_items, float)
 
-    def __getitem__(self, idx) -> typing.Union[tuple[np.array, typing.Any], tuple[np.array]]:
+    def __getitem__(
+        self, idx
+    ) -> typing.Union[tuple[np.array, typing.Any], tuple[np.array]]:
         """
         Get an item from the dataset
         """
