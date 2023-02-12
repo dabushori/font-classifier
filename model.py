@@ -1,19 +1,27 @@
-import torch
-from torch import Tensor, nn
-from torch.nn import (
-    Sequential,
-    Conv2d,
-    BatchNorm2d,
-    ReLU,
-    Dropout,
-    AvgPool2d,
-    MaxPool2d,
-    Linear,
-    Flatten,
-    Sigmoid,
-    Module,
-)
 import numpy as np
+import torch
+from torch.nn import (
+    AvgPool2d,
+    BatchNorm2d,
+    Conv2d,
+    Dropout,
+    Flatten,
+    Linear,
+    MaxPool2d,
+    Module,
+    ReLU,
+    Sequential,
+)
+from torchvision.transforms import (
+    Compose,
+    GaussianBlur,
+    InterpolationMode,
+    RandomApply,
+    RandomHorizontalFlip,
+    RandomInvert,
+    RandomRotation,
+    RandomVerticalFlip,
+)
 
 
 class FontClassifierModel(Module):
@@ -21,7 +29,7 @@ class FontClassifierModel(Module):
     A model to classify fonts from an image of characters.
     """
 
-    def __init__(self, init_shape: tuple[int], in_channels) -> None:
+    def __init__(self, init_shape: tuple[int], in_channels: int) -> None:
         """
         Initiazlize the model.
 
@@ -79,7 +87,17 @@ class FontClassifierModel(Module):
             Linear(512, 5),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        self.augmentation = Compose(
+            [
+                RandomApply(GaussianBlur(kernel_size=(3, 3)), 0.5),
+                RandomHorizontalFlip(),
+                RandomVerticalFlip(),
+                RandomInvert(p=0.25),
+                # RandomRotation(degrees=(-90, 90), interpolation=InterpolationMode.BILINEAR),
+            ]
+        )
+
+    def forward(self, x: torch.Tensor, augmentation: bool = False) -> torch.Tensor:
         """
         Calculate the output of the model on a given input.
 
@@ -89,6 +107,8 @@ class FontClassifierModel(Module):
         Returns:
             torch.Tensor: The output of the model on the input vector.
         """
+        if augmentation and self.augmentation:
+            x = self.augmentation(x)
         x = self.conv_layers(x)
         x = self.linear_layers(x)
         return x
@@ -96,7 +116,7 @@ class FontClassifierModel(Module):
 
 class Resnet32Block(Module):
     @staticmethod
-    def calc_padding(shape, kernel_size, stride):
+    def calc_padding(shape: tuple[int], kernel_size: int, stride: int):
         shape = np.array(shape)
         return tuple(
             np.ceil(0.5 * (shape * stride - shape - stride + kernel_size - 1)).astype(
@@ -157,7 +177,7 @@ class Resnet32Block(Module):
 
         self.relu = ReLU()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         input_x = self.stride_layers(x) if self.stride_layers else x
         x = self.first_layer(x)
         x = self.second_layer(x)
@@ -167,7 +187,7 @@ class Resnet32Block(Module):
 
 
 class Resnet32(Module):
-    def __init__(self, input_shape: tuple[int], in_channels: int, num_classes):
+    def __init__(self, input_shape: tuple[int], in_channels: int, num_classes: int):
         super().__init__()
 
         self.conv_layers = Sequential(
@@ -302,7 +322,7 @@ class Resnet32(Module):
             Linear(in_features=num_features, out_features=num_classes),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         x = self.conv_layers(x)
         x = self.linear_layers(x)
         return x
