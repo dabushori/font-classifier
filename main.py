@@ -70,7 +70,7 @@ def main():
         shape=init_shape
     )
     
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
     test_dataloader = DataLoader(test_dataset, shuffle=True)
 
     print('Data Loaded successfully!')
