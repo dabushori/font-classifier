@@ -1,5 +1,5 @@
-import numpy as np
 import cv2 as cv
+import numpy as np
 
 mean = np.loadtxt("data/char_mean_100x100.txt")
 std = np.loadtxt("data/char_std_100x100.txt")
@@ -22,10 +22,12 @@ def char_transform(x):
 
 
 def labels_transform(font):
+    if isinstance(font, bytes):
+        font = font.decode("UTF-8")
     return {
-        b"Titillium Web": 0,
-        b"Alex Brush": 1,
-        b"Ubuntu Mono": 2,
-        b"Open Sans": 3,
-        b"Sansation": 4,
+        "Titillium Web": 0,
+        "Alex Brush": 1,
+        "Ubuntu Mono": 2,
+        "Open Sans": 3,
+        "Sansation": 4,
     }[font]
