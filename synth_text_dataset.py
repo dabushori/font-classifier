@@ -1,8 +1,9 @@
-from torch.utils.data import Dataset
+import typing
+
+import cv2 as cv
 import h5py
 import numpy as np
-import cv2 as cv
-import typing
+from torch.utils.data import Dataset
 
 
 class SynthTextCharactersDataset(Dataset):
@@ -196,6 +197,7 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
         end_idx: int = None,
         shape: tuple[int] = (100, 200),
         train: bool = True,
+        permutation: np.array = None,
         transform: typing.Union[typing.Callable[[np.array], np.array], None] = None,
         target_transform: typing.Union[
             typing.Callable[[np.array], np.array], None
@@ -214,7 +216,7 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
         Create the dataset. The items that will be saved are the characters, each item is a character from an image.
         If this is a train dataset, each item will be saved as ((img_name, charBB), font).
         If this is a test dataset, each item will be saved as ((img_name, charBB)).
-        The start_idx and end_idx are used to specify the indexes of the files from the database to be used.
+        The start_idx and end_idx are used to specify the indexes of the characters to be used, after randomly shuffled.
         The shape will be the shape of each character's image after the projective transform.
 
         The `transform` and `target_transform` are applied to the input vector and its label on the initialization.
@@ -233,10 +235,11 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
         self.train = train
         self.shape = shape
 
-        im_names = list(self.db_data.keys())[start_idx:end_idx]
+        im_names = list(self.db_data.keys())
 
         self.x_items = []
         self.y_items = []
+
         if train:
             for im in im_names:
                 curr_img_data = self.db_data[im]
@@ -282,6 +285,10 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
                     self.y_items.append(y)
             self.x_items = np.array(self.x_items, np.float32)
             self.y_items = np.array(self.y_items)
+
+            if permutation is not None:
+                self.x_items = self.x_items[permutation][start_idx:end_idx]
+                self.y_items = self.y_items[permutation][start_idx:end_idx]
         else:
             for im in im_names:
                 curr_img_data = self.db_data[im]
@@ -314,6 +321,7 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
 
                     self.x_items.append(x)
             self.x_items = np.array(self.x_items, float)
+            self.x_items = self.x_items[start_idx:end_idx]
 
     def __getitem__(
         self, idx
