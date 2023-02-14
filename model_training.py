@@ -82,6 +82,9 @@ def main(params):
     train_percentage = params["train_percentage"]
     init_shape = (100, 100)
     permutation = np.random.permutation(num_of_images)
+
+    np.savetxt(f"outputs/{params['name']}_permutation.txt", permutation)
+
     train_dataset = SynthTextCharactersDatasetRAM(
         filename,
         full_image_transform=img_transform,
@@ -110,11 +113,12 @@ def main(params):
 
     classifier = params["model"](init_shape, 1).to(device)
     # classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
-    lr = params["lr"]
     epochs = params["epochs"]
 
     loss_fn = params["loss"]()
-    optimizer = params["optimizer"](classifier.parameters(), lr=lr)
+    optimizer = params["optimizer"](
+        classifier.parameters(), **params["optimizer_params"]
+    )
     # optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
 
     min_avg_loss = np.inf

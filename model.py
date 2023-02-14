@@ -13,6 +13,7 @@ from torch.nn import (
     Sequential,
 )
 from torchvision.transforms import (
+    ColorJitter,
     Compose,
     GaussianBlur,
     InterpolationMode,
@@ -50,13 +51,6 @@ class FontClassifierModel(Module):
             MaxPool2d(kernel_size=(2, 2)),
             Conv2d(
                 in_channels=64,
-                out_channels=128,
-                kernel_size=(3, 3),
-                stride=1,
-            ),
-            ReLU(),
-            Conv2d(
-                in_channels=128,
                 out_channels=128,
                 kernel_size=(3, 3),
                 stride=1,
@@ -100,6 +94,7 @@ class FontClassifierModel(Module):
                 RandomHorizontalFlip(),
                 RandomVerticalFlip(),
                 RandomInvert(p=0.25),
+                ColorJitter(brightness=1, hue=0.5),
                 # RandomRotation(degrees=(-90, 90), interpolation=InterpolationMode.BILINEAR),
             ]
         )
@@ -121,7 +116,108 @@ class FontClassifierModel(Module):
         return x
 
 
+
 class FontClassifierModel2(Module):
+    """
+    A model to classify fonts from an image of characters.
+    """
+
+    def __init__(self, init_shape: tuple[int], in_channels: int) -> None:
+        """
+        Initiazlize the model.
+
+        Args:
+            init_shape (tuple[int]): The initial shape of the images.
+        """
+
+        super().__init__()
+
+        self.conv_layers = Sequential(
+            Conv2d(
+                in_channels=in_channels,
+                out_channels=64,
+                kernel_size=(7, 7),
+                stride=1,
+                padding=3,
+            ),
+            ReLU(),
+            Conv2d(
+                in_channels=64,
+                out_channels=64,
+                kernel_size=(3, 3),
+                stride=1,
+            ),
+            ReLU(),
+            MaxPool2d(kernel_size=(2, 2)),
+            Conv2d(
+                in_channels=64,
+                out_channels=128,
+                kernel_size=(3, 3),
+                stride=1,
+            ),
+            ReLU(),
+            MaxPool2d(kernel_size=(2, 2)),
+            Conv2d(
+                in_channels=128,
+                out_channels=256,
+                kernel_size=(3, 3),
+                stride=1,
+            ),
+            ReLU(),
+            MaxPool2d(kernel_size=(2, 2)),
+            Conv2d(
+                in_channels=256,
+                out_channels=512,
+                kernel_size=(3, 3),
+                stride=1,
+            ),
+            ReLU(),
+            MaxPool2d(kernel_size=(2, 2)),
+            Dropout(0.25),
+        )
+
+        demo_vec = torch.zeros((1, 1, *init_shape))
+        demo_vec = self.conv_layers(demo_vec)
+
+        num_features = np.prod(demo_vec.shape)
+
+        self.linear_layers = Sequential(
+            Flatten(),
+            Linear(num_features, 4096),
+            ReLU(),
+            Linear(4096, 5),
+        )
+
+        self.augmentation = Compose(
+            [
+                RandomApply(GaussianBlur(kernel_size=(3, 3)), 0.5),
+                RandomHorizontalFlip(),
+                RandomVerticalFlip(),
+                RandomInvert(p=0.25),
+                ColorJitter(brightness=1, hue=0.5),
+                # RandomRotation(degrees=(-90, 90), interpolation=InterpolationMode.BILINEAR),
+            ]
+        )
+
+    def forward(self, x: torch.Tensor, augmentation: bool = False) -> torch.Tensor:
+        """
+        Calculate the output of the model on a given input.
+
+        Args:
+            x (torch.Tensor): The input vector.
+
+        Returns:
+            torch.Tensor: The output of the model on the input vector.
+        """
+        if augmentation and self.augmentation:
+            x = self.augmentation(x)
+        x = self.conv_layers(x)
+        x = self.linear_layers(x)
+        return x
+
+
+
+class FontClassifierModel3(Module):
     """
     A model to classify fonts from an image of characters.
     """
@@ -143,6 +239,8 @@ class FontClassifierModel2(Module):
                 kernel_size=(3, 3),
                 stride=1,
             ),
+            BatchNorm2d(64),
+            Dropout(0.3),
             ReLU(),
             MaxPool2d(kernel_size=(2, 2)),
             Conv2d(
@@ -158,22 +256,24 @@ class FontClassifierModel2(Module):
                 kernel_size=(3, 3),
                 stride=1,
             ),
-            ReLU(),
-            Conv2d(
-                in_channels=128,
-                out_channels=128,
-                kernel_size=(3, 3),
-                stride=1,
-            ),
+            BatchNorm2d(128),
             ReLU(),
             MaxPool2d(kernel_size=(2, 2)),
-            Dropout(0.3),
             Conv2d(
                 in_channels=128,
                 out_channels=256,
                 kernel_size=(3, 3),
                 stride=1,
             ),
+            BatchNorm2d(256),
+            ReLU(),
+            Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=(3, 3),
+                stride=1,
+            ),
+            BatchNorm2d(256),
             ReLU(),
             MaxPool2d(kernel_size=(2, 2)),
             Conv2d(
@@ -182,9 +282,10 @@ class FontClassifierModel2(Module):
                 kernel_size=(3, 3),
                 stride=1,
             ),
+            BatchNorm2d(512),
             ReLU(),
             MaxPool2d(kernel_size=(2, 2)),
-            Dropout(0.3),
+            Dropout(0.5),
         )
 
         demo_vec = torch.zeros((1, 1, *init_shape))
@@ -205,6 +306,7 @@ class FontClassifierModel2(Module):
                 RandomHorizontalFlip(),
                 RandomVerticalFlip(),
                 RandomInvert(p=0.3),
+                ColorJitter(brightness=1, hue=0.5),
                 # RandomRotation(degrees=(-90, 90), interpolation=InterpolationMode.BILINEAR),
             ]
         )
