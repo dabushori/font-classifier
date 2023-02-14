@@ -7,5 +7,5 @@ Project - Test Set.zip
 
 __pycache__
 
-outputs/
-models/
+test_outputs/
+test_models/

@@ -1,0 +1,2 @@
+name,accuracy,loss
+all_models_without_perms\FontClassifierModel_0.01_25_CrossEntropyLoss_SGD_32_0.8,0.7803079947575361,0.6178451375084344
