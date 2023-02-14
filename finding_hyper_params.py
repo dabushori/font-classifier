@@ -7,7 +7,7 @@ import model_training
 from model import *
 
 if __name__ == "__main__":
-    curr_run_outputs_dir = "all_models_with_perms"
+    curr_run_outputs_dir = "model_name"
     if not os.path.isdir("outputs"):
         os.mkdir("outputs")
     if not os.path.isdir(os.path.join("outputs", curr_run_outputs_dir)):
@@ -17,11 +17,11 @@ if __name__ == "__main__":
     if not os.path.isdir(os.path.join("models", curr_run_outputs_dir)):
         os.mkdir(os.path.join("models", curr_run_outputs_dir))
 
-    lr_options = [1e-1]
-    epochs_options = [50]
+    lr_options = [1e-2]
+    epochs_options = [25]
     loss_options = [nn.CrossEntropyLoss]
     optimizer_options = [optim.SGD]
-    batch_size_options = [32]
+    batch_size_options = [16]
     train_percentage_options = [0.8]
     model_options = [FontClassifierModel]
     weight_decay_options = [1e-5]
@@ -57,7 +57,7 @@ if __name__ == "__main__":
                 "batch_size": batch_size,
                 "train_percentage": train_percentage,
                 "dataset_path": "Project/SynthText_train.h5",
-                "num_images": 30520,  # 998,  # 30520
+                "num_images": 30520,
                 "results_file": results_file,
                 "model": model,
                 "optimizer_params": {

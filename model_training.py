@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -74,14 +76,12 @@ def main(params):
 
     print("Loading data...")
 
-    # filename = "Project/SynthTextData_1000.hdf5"
-    # filename = "Project/SynthText_train.h5"
     filename = params["dataset_path"]
-    # num_of_images = 1000
     num_of_images = params["num_images"]
     train_percentage = params["train_percentage"]
     init_shape = (100, 100)
-    permutation = np.random.permutation(num_of_images)
+    # permutation = np.random.permutation(num_of_images)
+    permutation = np.arange(num_of_images)
 
     np.savetxt(f"outputs/{params['name']}_permutation.txt", permutation)
 
@@ -112,14 +112,13 @@ def main(params):
     print("Data Loaded successfully!")
 
     classifier = params["model"](init_shape, 1).to(device)
-    # classifier = Resnet32(init_shape, 1, num_classes=5).to(device)
+    # classifier = params["model"](init_shape, 1, num_classes=5).to(device) # for ResNet32
     epochs = params["epochs"]
 
     loss_fn = params["loss"]()
     optimizer = params["optimizer"](
         classifier.parameters(), **params["optimizer_params"]
     )
-    # optimizer = torch.optim.Adam(classifier.parameters(), lr=lr)
 
     min_avg_loss = np.inf
     max_acc = -np.inf
@@ -174,19 +173,25 @@ def main(params):
 
 if __name__ == "__main__":
     lr = 1e-2
-    epochs = 2
+    epochs = 25
     loss = nn.CrossEntropyLoss
     optimizer = torch.optim.SGD
     batch_size = 32
     train_percentage = 0.8
-    results_file = "outputs/res.csv"
+    model = FontClassifierModel
+
+    if not os.path.isdir("outputs"):
+        os.mkdir("outputs")
+    if not os.path.isdir("models"):
+        os.mkdir("models")
+
+    results_file = os.path.join("outputs", "results.csv")
 
     with open(results_file, "w") as res_file:
         res_file.write("name,accuracy,loss\n")
 
     main(
         {
-            "lr": lr,
             "epochs": epochs,
             "loss": loss,
             "optimizer": optimizer,
@@ -195,16 +200,22 @@ if __name__ == "__main__":
             "dataset_path": "Project/SynthText_train.h5",
             "num_images": 30520,  # 998,  # 30520
             "results_file": results_file,
-            "name": "_".join(
-                [
-                    "SynthText_train",
-                    str(lr),
-                    str(epochs),
-                    str(loss.__name__),
-                    str(optimizer.__name__),
-                    str(batch_size),
-                    str(train_percentage),
-                ]
+            "model": model,
+            "optimizer_params": {
+                "lr": lr,
+            },
+            "name": os.path.join(
+                "_".join(
+                    [
+                        str(model.__name__),
+                        str(lr),
+                        str(epochs),
+                        str(loss.__name__),
+                        str(optimizer.__name__),
+                        str(batch_size),
+                        str(train_percentage),
+                    ]
+                ),
             ),
         }
     )

@@ -35,9 +35,7 @@ def my_label_to_csv_label(label):
 
 def main():
     filename = r"Project - Test Set\SynthText_test.h5"
-    model_name = (
-        r"all_models_with_perms\FontClassifierModel_0.01_50_CrossEntropyLoss_SGD_32_0.8"
-    )
+    model_name = r"all_models_without_perms\FontClassifierModel_0.01_25_CrossEntropyLoss_SGD_32_0.8"
 
     init_shape = (100, 100)
     test_dataset = SynthTextCharactersDatasetTest(
