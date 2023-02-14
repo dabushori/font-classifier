@@ -238,9 +238,10 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
         im_names = list(self.db_data.keys())
 
         self.x_items = []
-        self.y_items = []
 
         if train:
+            self.y_items = []
+
             for im in im_names:
                 curr_img_data = self.db_data[im]
                 num_chars = curr_img_data.attrs["charBB"].shape[2]
@@ -320,8 +321,10 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
                     )
 
                     self.x_items.append(x)
-            self.x_items = np.array(self.x_items, float)
-            self.x_items = self.x_items[start_idx:end_idx]
+            self.x_items = np.array(self.x_items, np.float32)
+
+            if permutation is not None:
+                self.x_items = self.x_items[permutation][start_idx:end_idx]
 
     def __getitem__(
         self, idx
@@ -331,3 +334,76 @@ class SynthTextCharactersDatasetRAM(SynthTextCharactersDataset):
         """
 
         return self.x_items[idx], self.y_items[idx] if self.train else self.x_items[idx]
+
+
+class SynthTextCharactersDatasetTest(SynthTextCharactersDataset):
+    def __init__(
+        self,
+        filename: str,
+        shape: tuple[int] = (100, 100),
+        char_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+        full_image_transform: typing.Union[
+            typing.Callable[[np.array], np.array], None
+        ] = None,
+    ):
+        self.char_transform = char_transform
+        self.full_image_transform = full_image_transform
+
+        self.db = h5py.File(filename, "r")
+        self.db_data = self.db["data"]
+
+        self.shape = shape
+
+        im_names = list(self.db_data.keys())
+
+        self.x_items = []
+        self.chars = []
+        self.words = []
+
+        word_idx = 0
+        char_idx = 0
+        for im in im_names:
+            curr_img_data = self.db_data[im]
+
+            img_data = self.get_image_data(im)
+
+            start_char_idx = char_idx
+            for text in curr_img_data.attrs["txt"]:
+                char_indexes = []
+                text = text.decode("UTF-8")
+                for char in text:
+                    charBB = curr_img_data.attrs["charBB"][
+                        :, :, char_idx - start_char_idx
+                    ]
+                    x = self.get_char_data(img_data, charBB, self.shape)
+                    if len(x.shape) == 3:
+                        x = x.swapaxes(1, 2).swapaxes(0, 1)
+                    x = self.char_transform(x) if self.char_transform else x
+
+                    self.x_items.append(x)
+                    self.chars.append(char)
+                    char_indexes.append(char_idx)
+                    char_idx += 1
+                self.words.append(char_indexes)
+                word_idx += 1
+
+        self.x_items = np.array(self.x_items, np.float32)
+
+    def __getitem__(
+        self, idx
+    ) -> typing.Union[tuple[np.array, typing.Any], tuple[np.array]]:
+        return self.x_items[self.words[idx]]
+
+    def __len__(self):
+        return len(self.words)
+
+    def get_char_at_idx(self, idx: int) -> str:
+        return self.chars[idx]
+
+    def get_chars_at_word_idx(self, word_idx: int) -> str:
+        return [self.chars[i] for i in self.words[word_idx]]
+
+    def get_word_indexes_at_idx(self, word_idx: int) -> list[int]:
+        return self.words[word_idx]
