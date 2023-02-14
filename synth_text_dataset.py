@@ -360,6 +360,7 @@ class SynthTextCharactersDatasetTest(SynthTextCharactersDataset):
 
         self.x_items = []
         self.chars = []
+        self.img_names = []
         self.words = []
 
         word_idx = 0
@@ -384,6 +385,7 @@ class SynthTextCharactersDatasetTest(SynthTextCharactersDataset):
 
                     self.x_items.append(x)
                     self.chars.append(char)
+                    self.img_names.append(im)
                     char_indexes.append(char_idx)
                     char_idx += 1
                 self.words.append(char_indexes)
@@ -401,6 +403,9 @@ class SynthTextCharactersDatasetTest(SynthTextCharactersDataset):
 
     def get_char_at_idx(self, idx: int) -> str:
         return self.chars[idx]
+
+    def get_img_name_at_idx(self, idx: int) -> str:
+        return self.img_names[idx]
 
     def get_chars_at_word_idx(self, word_idx: int) -> str:
         return [self.chars[i] for i in self.words[word_idx]]
